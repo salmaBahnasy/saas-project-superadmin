@@ -10,6 +10,8 @@ export const SHIPPING_PROVIDERS = [
 ];
 
 export function providerLabel(provider) {
+  const key = String(provider || "").trim().toLowerCase();
+  if (key === "spreadsheet") return "Historical Data";
   return (
     [...COMMERCE_PROVIDERS, ...SHIPPING_PROVIDERS].find((item) => item.id === provider)
       ?.label || provider

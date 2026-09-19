@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listCompanies, setCompanyActive } from "../api/companies";
-import { listCompanyIntegrations } from "../api/companyIntegrations";
 import { Banner, StatusBadge } from "../components/ui/Feedback.jsx";
 import { formatDate } from "../lib/providers";
 
@@ -16,14 +15,7 @@ export function CompaniesPage() {
     setError("");
     try {
       const companiesRes = await listCompanies();
-      const companies = companiesRes.data || [];
-      const withCounts = await Promise.all(
-        companies.map(async (company) => {
-          const integrations = await listCompanyIntegrations(company.id);
-          return { ...company, integrationsCount: (integrations.data || []).length };
-        }),
-      );
-      setRows(withCounts);
+      setRows(companiesRes.data || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -45,7 +37,14 @@ export function CompaniesPage() {
 
   async function toggle(company) {
     try {
-      await setCompanyActive(company.id, company.is_active === false);
+      const activating = company.is_active === false;
+      if (!activating) {
+        const confirmed = window.confirm(
+          "Deactivate this company? Employees will not be able to sign in until it is activated again.",
+        );
+        if (!confirmed) return;
+      }
+      await setCompanyActive(company.id, activating);
       await load();
     } catch (err) {
       setError(err.message);
@@ -58,9 +57,10 @@ export function CompaniesPage() {
         <div>
           <p className="eyebrow">Tenants</p>
           <h1>Companies</h1>
+          <p className="muted">Newest workspaces appear first, including public signups.</p>
         </div>
-        <Link className="btn btn-primary" to="/platform/companies/new">
-          + Add company
+        <Link className="btn btn-secondary" to="/platform/companies/new">
+          Create company manually
         </Link>
       </div>
       <input
@@ -95,7 +95,7 @@ export function CompaniesPage() {
                   <td>
                     <StatusBadge active={company.is_active !== false} offLabel="Inactive" />
                   </td>
-                  <td>{company.integrationsCount}</td>
+                  <td>{company.integrationsCount ?? 0}</td>
                   <td>{formatDate(company.created_at)}</td>
                   <td>
                     <div className="wrap">
@@ -104,12 +104,12 @@ export function CompaniesPage() {
                       </Link>
                       <Link
                         className="btn btn-secondary btn-small"
-                        to={`/platform/companies/${company.id}?tab=overview&edit=1`}
+                        to={`/platform/companies/${company.id}?tab=branding`}
                       >
                         Edit
                       </Link>
                       <button
-                        className="btn btn-secondary btn-small"
+                        className={company.is_active === false ? "btn btn-secondary btn-small" : "btn btn-danger btn-small"}
                         type="button"
                         onClick={() => toggle(company)}
                       >

@@ -1,28 +1,39 @@
-import { SecretField } from "../ui/SecretField.jsx";
+export function SallaForm({ existing }) {
+  const status = existing?.authorizationStatus || "pending";
+  const merchantName = existing?.merchantName || null;
+  const merchantId = existing?.providerAccountId || null;
 
-export function SallaForm({ values, onChange, existing }) {
   return (
     <div className="stack">
-      <SecretField
-        label="Access Token"
-        name="accessToken"
-        configured={Boolean(existing?.configured)}
-        masked={existing?.apiKeyMasked}
-        value={values.accessToken}
-        replacing={values.replaceAccessToken}
-        onReplace={() => onChange({ replaceAccessToken: true, accessToken: "" })}
-        onCancelReplace={() => onChange({ replaceAccessToken: false, accessToken: "" })}
-        onChange={(accessToken) => onChange({ accessToken })}
-      />
-      <div className="field">
-        <label htmlFor="sallaApiBaseUrl">API base URL (optional)</label>
-        <input
-          id="sallaApiBaseUrl"
-          className="input"
-          value={values.apiBaseUrl}
-          onChange={(event) => onChange({ apiBaseUrl: event.target.value })}
-        />
-      </div>
+      <p className="muted">
+        Salla uses Partner App OAuth. Save the connection, then click Connect Salla.
+        Do not paste merchant access tokens.
+      </p>
+      {existing ? (
+        <>
+          <div className="field">
+            <label>Authorization status</label>
+            <input className="input" readOnly value={status} />
+          </div>
+          {merchantName ? (
+            <div className="field">
+              <label>Merchant / store name</label>
+              <input className="input" readOnly value={merchantName} />
+            </div>
+          ) : null}
+          {merchantId ? (
+            <div className="field">
+              <label>Merchant id</label>
+              <input className="input" readOnly value={merchantId} />
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <p className="muted">
+          Creating this connection stores only the name and enabled flag. Authorization
+          happens in the browser after you click Connect Salla.
+        </p>
+      )}
     </div>
   );
 }

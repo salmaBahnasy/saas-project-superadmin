@@ -1,5 +1,9 @@
 import { apiRequest } from "./client";
 
+export function listIntegrationsOverview() {
+  return apiRequest("/api/platform/integrations");
+}
+
 export function listCompanyIntegrations(companyId) {
   return apiRequest(`/api/platform/companies/${companyId}/integrations`);
 }
@@ -37,6 +41,13 @@ export function deleteCompanyIntegration(companyId, integrationId) {
 export function rotateWebhook(companyId, integrationId) {
   return apiRequest(
     `/api/platform/companies/${companyId}/integrations/${integrationId}/rotate-webhook`,
+    { method: "POST" },
+  );
+}
+
+export function connectSallaIntegration(companyId, integrationId) {
+  return apiRequest(
+    `/api/platform/companies/${companyId}/integrations/${integrationId}/salla/connect`,
     { method: "POST" },
   );
 }

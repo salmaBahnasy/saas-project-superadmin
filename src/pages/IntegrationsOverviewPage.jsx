@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { listCompanies } from "../api/companies";
-import { listCompanyIntegrations } from "../api/companyIntegrations";
+import { listIntegrationsOverview } from "../api/companyIntegrations";
 import { Banner, StatusBadge } from "../components/ui/Feedback.jsx";
 import { providerLabel } from "../lib/providers";
 
@@ -14,16 +13,8 @@ export function IntegrationsOverviewPage() {
     let cancelled = false;
     async function load() {
       try {
-        const companiesRes = await listCompanies();
-        const companies = companiesRes.data || [];
-        const all = [];
-        for (const company of companies) {
-          const integrations = await listCompanyIntegrations(company.id);
-          for (const connection of integrations.data || []) {
-            all.push({ ...connection, companyName: company.name, companyId: company.id });
-          }
-        }
-        if (!cancelled) setRows(all);
+        const result = await listIntegrationsOverview();
+        if (!cancelled) setRows(result.data || []);
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -41,7 +32,10 @@ export function IntegrationsOverviewPage() {
       <div>
         <p className="eyebrow">Connections</p>
         <h1>Integrations</h1>
-        <p className="muted">Every store and shipping account across companies.</p>
+        <p className="muted">
+          Support view of every store and shipping account across companies.
+          Company Admin normally manages their own integrations from the Company Dashboard.
+        </p>
       </div>
       {error ? <Banner>{error}</Banner> : null}
       {loading ? (

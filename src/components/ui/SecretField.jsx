@@ -14,7 +14,7 @@ export function SecretField({
       <div className="field">
         <label>{label}</label>
         <div className="secret-box spread">
-          <span>************** configured</span>
+          <span>{masked ? `${masked} configured` : "************** configured"}</span>
           <button className="btn btn-secondary btn-small" type="button" onClick={onReplace}>
             Replace {label}
           </button>

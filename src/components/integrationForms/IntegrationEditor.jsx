@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { COMMERCE_PROVIDERS, SHIPPING_PROVIDERS } from "../../lib/providers";
+import { looksLikeShopifyShopDomain } from "../../lib/shopifyDomain.js";
 import { Banner } from "../ui/Feedback.jsx";
 import { Modal } from "../ui/Modal.jsx";
 import { ProviderFields, credentialsPayload, emptyCredentialState } from "./ProviderFields.jsx";
@@ -19,7 +20,11 @@ export function IntegrationEditor({
   const [providerAccountId, setProviderAccountId] = useState(
     existing?.providerAccountId || "",
   );
-  const [values, setValues] = useState(emptyCredentialState());
+  const [values, setValues] = useState(() => ({
+    ...emptyCredentialState(),
+    shopDomain: existing?.shopDomain || "",
+  }));
+  const [formError, setFormError] = useState("");
 
   const providers = category === "shipping" ? SHIPPING_PROVIDERS : COMMERCE_PROVIDERS;
 
@@ -40,15 +45,45 @@ export function IntegrationEditor({
 
   function handleSubmit(event) {
     event.preventDefault();
+    setFormError("");
+    const nextProvider = existing ? existing.provider : selectedProvider;
+    if (nextProvider === "spreadsheet") {
+      onSubmit({
+        name,
+        enabled,
+      });
+      return;
+    }
+    if (nextProvider === "shopify") {
+      const shopDomain = String(values.shopDomain || existing?.shopDomain || "").trim();
+      if (!shopDomain) {
+        setFormError("Shopify shop domain is required.");
+        return;
+      }
+      if (!looksLikeShopifyShopDomain(shopDomain)) {
+        setFormError("Use a myshopify.com shop domain, for example store.myshopify.com.");
+        return;
+      }
+      if (!existing && !String(values.accessToken || "").trim()) {
+        setFormError("Shopify Admin API access token is required.");
+        return;
+      }
+      if (!existing && !String(values.webhookSecret || "").trim()) {
+        setFormError("Shopify webhook HMAC secret is required.");
+        return;
+      }
+    }
     const credentials = credentialsPayload(values);
     const payload = {
       category,
       provider: existing ? existing.provider : selectedProvider,
       name,
       enabled,
-      providerAccountId: providerAccountId || null,
     };
-    if (Object.keys(credentials).length) {
+    if (nextProvider !== "salla") {
+      payload.providerAccountId = providerAccountId || null;
+    }
+    if (nextProvider !== "salla" && Object.keys(credentials).length) {
       payload.credentials = credentials;
     }
     onSubmit(payload);
@@ -58,6 +93,7 @@ export function IntegrationEditor({
     <Modal title={title} onClose={onClose}>
       <form className="stack" onSubmit={handleSubmit}>
         {error ? <Banner>{error}</Banner> : null}
+        {formError ? <Banner>{formError}</Banner> : null}
         {!existing ? (
           <>
             <div className="field">
@@ -123,6 +159,8 @@ export function IntegrationEditor({
           existing={existing}
         />
 
+        {(existing?.provider || selectedProvider) !== "salla" &&
+        (existing?.provider || selectedProvider) !== "spreadsheet" ? (
         <div className="field">
           <label htmlFor="providerAccountId">Provider account / store id (optional)</label>
           <input
@@ -132,6 +170,7 @@ export function IntegrationEditor({
             onChange={(event) => setProviderAccountId(event.target.value)}
           />
         </div>
+        ) : null}
 
         <div className="row">
           <button className="btn btn-primary" type="submit" disabled={saving}>

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { listCompanies } from "../api/companies";
-import { listCompanyIntegrations } from "../api/companyIntegrations";
 import { Banner } from "../components/ui/Feedback.jsx";
+import { formatDate } from "../lib/providers";
 
 export function DashboardPage() {
   const [stats, setStats] = useState(null);
+  const [recent, setRecent] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -15,18 +16,16 @@ export function DashboardPage() {
       try {
         const companiesRes = await listCompanies();
         const companies = companiesRes.data || [];
-        const integrationLists = await Promise.all(
-          companies.map(async (company) => {
-            const result = await listCompanyIntegrations(company.id);
-            return result.data || [];
-          }),
-        );
         if (cancelled) return;
+        setRecent(companies.slice(0, 5));
         setStats({
           totalCompanies: companies.length,
           activeCompanies: companies.filter((row) => row.is_active !== false).length,
           inactiveCompanies: companies.filter((row) => row.is_active === false).length,
-          totalIntegrations: integrationLists.reduce((sum, rows) => sum + rows.length, 0),
+          totalIntegrations: companies.reduce(
+            (sum, row) => sum + Number(row.integrationsCount || 0),
+            0,
+          ),
         });
       } catch (err) {
         if (!cancelled) setError(err.message);
@@ -50,8 +49,8 @@ export function DashboardPage() {
           <p className="eyebrow">Overview</p>
           <h1>Platform dashboard</h1>
         </div>
-        <Link className="btn btn-primary" to="/platform/companies/new">
-          + Add company
+        <Link className="btn btn-secondary" to="/platform/companies/new">
+          Create company manually
         </Link>
       </div>
       <div className="cards">
@@ -72,6 +71,27 @@ export function DashboardPage() {
           <div className="stat">{stats.totalIntegrations}</div>
         </div>
       </div>
+      <section className="panel stack">
+        <div className="spread">
+          <h2>Recent companies</h2>
+          <Link to="/platform/companies">View all</Link>
+        </div>
+        {recent.length === 0 ? (
+          <p className="muted">No companies yet.</p>
+        ) : (
+          recent.map((company) => (
+            <div className="spread" key={company.id}>
+              <div>
+                <Link to={`/platform/companies/${company.id}`}>
+                  <strong>{company.name}</strong>
+                </Link>
+                <div className="muted">{company.slug}</div>
+              </div>
+              <span className="muted">{formatDate(company.created_at)}</span>
+            </div>
+          ))
+        )}
+      </section>
     </div>
   );
 }

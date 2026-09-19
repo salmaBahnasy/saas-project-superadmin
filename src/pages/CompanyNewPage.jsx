@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createCompany } from "../api/companies";
 import { Banner } from "../components/ui/Feedback.jsx";
+import { getCustomerSignupUrl } from "../lib/companyAppUrl";
 import { slugify } from "../lib/providers";
 
 export function CompanyNewPage() {
   const navigate = useNavigate();
+  const signupUrl = getCustomerSignupUrl();
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -46,9 +48,23 @@ export function CompanyNewPage() {
   return (
     <form className="panel stack" onSubmit={onSubmit} style={{ maxWidth: 680 }}>
       <div>
-        <p className="eyebrow">New tenant</p>
-        <h1>Add company</h1>
-        <p className="muted">Integrations are added after the company exists.</p>
+        <p className="eyebrow">Admin only</p>
+        <h1>Create company manually</h1>
+        <p className="muted">
+          Normal customers should create their workspace through the public signup flow.
+          This creates the company record only and does not create the first login admin.
+        </p>
+        {signupUrl ? (
+          <p>
+            <a href={signupUrl} target="_blank" rel="noreferrer">
+              Open customer signup
+            </a>
+          </p>
+        ) : (
+          <p className="muted">
+            Use the Company Dashboard public signup page for the canonical onboarding path.
+          </p>
+        )}
       </div>
       {error ? <Banner>{error}</Banner> : null}
       <div className="field">
@@ -116,8 +132,11 @@ export function CompanyNewPage() {
         </div>
       </div>
       <button className="btn btn-primary" type="submit" disabled={saving}>
-        {saving ? "Creating..." : "Create company"}
+        {saving ? "Creating..." : "Create company record"}
       </button>
+      <Link className="muted" to="/platform/companies">
+        Back to companies
+      </Link>
     </form>
   );
 }

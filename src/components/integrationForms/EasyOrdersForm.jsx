@@ -15,14 +15,10 @@ export function EasyOrdersForm({ values, onChange, existing }) {
         onChange={(apiKey) => onChange({ apiKey })}
       />
       <div className="field">
-        <label htmlFor="apiBaseUrl">API base URL (optional)</label>
-        <input
-          id="apiBaseUrl"
-          className="input"
-          value={values.apiBaseUrl}
-          onChange={(event) => onChange({ apiBaseUrl: event.target.value })}
-          placeholder="https://api.easy-orders.net/api/v1/external-apps"
-        />
+        <p className="muted">
+          EasyOrders requests use the server-controlled API origin. Company credentials
+          cannot set a custom API host.
+        </p>
       </div>
     </div>
   );
