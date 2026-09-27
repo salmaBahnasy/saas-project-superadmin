@@ -23,6 +23,7 @@ export function IntegrationEditor({
   const [values, setValues] = useState(() => ({
     ...emptyCredentialState(),
     shopDomain: existing?.shopDomain || "",
+    bostaMode: existing?.bostaMode || "",
   }));
   const [formError, setFormError] = useState("");
 
@@ -85,6 +86,20 @@ export function IntegrationEditor({
     }
     if (nextProvider !== "salla" && Object.keys(credentials).length) {
       payload.credentials = credentials;
+    }
+    if (nextProvider === "bosta") {
+      const mode = String(values.bostaMode || existing?.bostaMode || "").trim();
+      if (!existing && (mode !== "shipping" && mode !== "fulfillment")) {
+        setFormError("Choose Bosta mode: shipping or fulfillment.");
+        return;
+      }
+      if (mode === "shipping" || mode === "fulfillment") {
+        payload.settings = { bostaMode: mode };
+      }
+      if (mode === "shipping" && credentials.fulfillmentApiKey) {
+        delete credentials.fulfillmentApiKey;
+        payload.credentials = credentials;
+      }
     }
     onSubmit(payload);
   }

@@ -43,6 +43,7 @@ export function emptyCredentialState() {
     fulfillmentApiKey: "",
     shopDomain: "",
     webhookSecret: "",
+    bostaMode: "",
     replaceApiKey: false,
     replaceAccessToken: false,
     replaceWebhookSecret: false,
