@@ -408,10 +408,21 @@ export function CompanyDetailsPage() {
                     ? ` · ${sallaStatusLabel(connection)}${connection.merchantName ? ` · ${connection.merchantName}` : ""}${connection.providerAccountId ? ` · ${connection.providerAccountId}` : ""}`
                     : ""}
                 </div>
-                {!isSpreadsheetSource(connection) && revealedWebhooks[connection.id] ? (
+                {!isSpreadsheetSource(connection) &&
+                (revealedWebhooks[connection.id] || connection.webhookUrl) ? (
                   <div className="webhook" style={{ marginTop: 10 }}>
-                    <input className="input" readOnly value={revealedWebhooks[connection.id]} />
-                    <button className="btn btn-secondary btn-small" type="button" onClick={() => copyWebhook(revealedWebhooks[connection.id])}>
+                    <input
+                      className="input"
+                      readOnly
+                      value={revealedWebhooks[connection.id] || connection.webhookUrl}
+                    />
+                    <button
+                      className="btn btn-secondary btn-small"
+                      type="button"
+                      onClick={() =>
+                        copyWebhook(revealedWebhooks[connection.id] || connection.webhookUrl)
+                      }
+                    >
                       Copy
                     </button>
                     <button className="btn btn-secondary btn-small" type="button" onClick={() => handleRotate(connection)}>

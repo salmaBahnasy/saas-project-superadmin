@@ -54,6 +54,7 @@ describe("Shopify Super Admin connection UX", () => {
     const client = readFileSync(join(here, "api/client.js"), "utf8");
     assert.match(page, /webhookConfigured/);
     assert.match(page, /Configured — rotate to generate a new URL/);
+    assert.match(page, /revealedWebhooks\[connection\.id\] \|\| connection\.webhookUrl/);
     assert.match(page, /revealedWebhooks/);
     assert.match(page, /Copy/);
     assert.match(page, /orders\/create/);
