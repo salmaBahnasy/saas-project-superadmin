@@ -202,10 +202,6 @@ export function CompanyDetailsPage() {
     () => integrations.filter((row) => row.category === "shipping"),
     [integrations],
   );
-  const admins = useMemo(
-    () => employees.filter((row) => row.isCompanyAdmin || row.role === "company_admin"),
-    [employees],
-  );
   const featureGroups = useMemo(() => {
     const groups = { core: [], operational: [], legacy: [], other: [] };
     for (const feature of features) {
@@ -567,9 +563,17 @@ export function CompanyDetailsPage() {
             <div className="muted">Status: {company.subscription_status || "none"}</div>
             <div>
               <strong>Company admin</strong>
-              <div className="muted">
-                Open the Employees tab to view company_admin accounts.
-              </div>
+              {(company.companyAdmins || []).length > 0 ? (
+                (company.companyAdmins || []).map((admin) => (
+                  <div className="stack" key={admin.id || admin.email} style={{ marginTop: 8 }}>
+                    <div>{admin.name || "Unnamed admin"}</div>
+                    <div className="muted">{admin.email || "No email"}</div>
+                    <div>{admin.phone || "No phone on file"}</div>
+                  </div>
+                ))
+              ) : (
+                <div className="muted">No company admin contact on file.</div>
+              )}
             </div>
           </section>
           <section className="panel stack">
@@ -597,6 +601,7 @@ export function CompanyDetailsPage() {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>Role</th>
                 <th>Status</th>
               </tr>
@@ -609,6 +614,7 @@ export function CompanyDetailsPage() {
                     {row.isCompanyAdmin ? <span className="pill">company_admin</span> : null}
                   </td>
                   <td>{row.email}</td>
+                  <td dir="ltr">{row.phone || "—"}</td>
                   <td>{row.role}</td>
                   <td>
                     <StatusBadge active={row.is_active !== false} offLabel="Inactive" />

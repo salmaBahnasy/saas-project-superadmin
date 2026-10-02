@@ -31,7 +31,9 @@ export function CompaniesPage() {
     const needle = query.trim().toLowerCase();
     if (!needle) return rows;
     return rows.filter((row) =>
-      [row.name, row.slug].some((value) => String(value || "").toLowerCase().includes(needle)),
+      [row.name, row.slug, row.adminName, row.adminEmail, row.adminPhone].some((value) =>
+        String(value || "").toLowerCase().includes(needle),
+      ),
     );
   }, [rows, query]);
 
@@ -78,6 +80,7 @@ export function CompaniesPage() {
             <thead>
               <tr>
                 <th>Company</th>
+                <th>Admin phone</th>
                 <th>Slug</th>
                 <th>Status</th>
                 <th>Integrations</th>
@@ -90,7 +93,11 @@ export function CompaniesPage() {
                 <tr key={company.id}>
                   <td>
                     <strong>{company.name}</strong>
+                    {company.adminEmail ? (
+                      <div className="muted">{company.adminEmail}</div>
+                    ) : null}
                   </td>
+                  <td dir="ltr">{company.adminPhone || "—"}</td>
                   <td>{company.slug}</td>
                   <td>
                     <StatusBadge active={company.is_active !== false} offLabel="Inactive" />

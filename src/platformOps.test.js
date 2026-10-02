@@ -15,7 +15,8 @@ describe("Super Admin company operations UX", () => {
   it("shows newest companies first and keeps client search", () => {
     const page = read("pages/CompaniesPage.jsx");
     assert.match(page, /Newest workspaces appear first/);
-    assert.match(page, /Search companies/);
+    assert.match(page, /Admin phone/);
+    assert.match(page, /adminPhone/);
     assert.equal(page.includes("listCompanyIntegrations"), false);
     assert.match(page, /integrationsCount/);
     assert.match(page, /Employees will not be able to sign in/);
@@ -35,7 +36,8 @@ describe("Super Admin company operations UX", () => {
   it("keeps employees read-only and identifies company_admin", () => {
     const page = read("pages/CompanyDetailsPage.jsx");
     const api = read("api/companyOps.js");
-    assert.match(page, /Read-only support view/);
+    assert.match(page, /companyAdmins/);
+    assert.match(page, /row\.phone/);
     assert.match(page, /company_admin/);
     assert.match(page, /row\.isCompanyAdmin/);
     assert.equal(page.includes("reset password"), false);
