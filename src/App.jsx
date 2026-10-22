@@ -7,11 +7,13 @@ import { CompanyNewPage } from "./pages/CompanyNewPage.jsx";
 import { CompanyDetailsPage } from "./pages/CompanyDetailsPage.jsx";
 import { IntegrationsOverviewPage } from "./pages/IntegrationsOverviewPage.jsx";
 import { SettingsPage } from "./pages/SettingsPage.jsx";
+import { AcceptInvitePage } from "./pages/AcceptInvitePage.jsx";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/platform" element={<ProtectedPlatform />}>
         <Route index element={<DashboardPage />} />
         <Route path="companies" element={<CompaniesPage />} />

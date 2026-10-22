@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { getCompany, setCompanyActive, updateCompany } from "../api/companies";
+import { getCompany, setCompanyActive, updateCompany, updateCompanyAdmin } from "../api/companies";
 import {
   listCompanyEmployees,
   listCompanyFeatures,
@@ -88,18 +88,31 @@ export function CompanyDetailsPage() {
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState(null);
   const [revealedWebhooks, setRevealedWebhooks] = useState({});
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [editingAdminId, setEditingAdminId] = useState("");
+  const [adminDraft, setAdminDraft] = useState("");
+  const [savingAdmin, setSavingAdmin] = useState(false);
 
-  async function loadCompany() {
-    const companyRes = await getCompany(companyId);
-    setCompany(companyRes.data);
+  async function loadCompany(isCurrent = () => true) {
+    const requestedId = String(companyId || "").trim();
+    const companyRes = await getCompany(requestedId);
+    if (!isCurrent()) return null;
+    const data = companyRes.data;
+    if (String(data?.id || "") !== requestedId) {
+      throw new Error("Company response did not match the open company.");
+    }
+    setCompany(data);
     setEditForm({
-      name: companyRes.data.name,
-      slug: companyRes.data.slug,
-      logo_url: companyRes.data.logo_url || "",
-      primary_color: companyRes.data.primary_color || "",
-      secondary_color: companyRes.data.secondary_color || "",
+      companyId: data.id,
+      name: data.name || "",
+      slug: data.slug || "",
+      logo_url: data.logo_url || "",
+      primary_color: data.primary_color || "",
+      secondary_color: data.secondary_color || "",
     });
-    return companyRes.data;
+    return data;
   }
 
   async function loadEmployeesTab() {
@@ -138,7 +151,7 @@ export function CompanyDetailsPage() {
       setLoading(true);
       setError("");
       try {
-        await loadCompany();
+        await loadCompany(() => !cancelled);
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -341,14 +354,113 @@ export function CompanyDetailsPage() {
     }
   }
 
+  function cancelCompanyName() {
+    setEditingName(false);
+    setNameDraft(company?.name || "");
+  }
+
+  async function saveCompanyName(event) {
+    event.preventDefault();
+    const requestedId = String(companyId || "").trim();
+    const loadedId = String(company?.id || "").trim();
+    const name = String(nameDraft || "").trim();
+    if (!requestedId || loadedId !== requestedId) {
+      setError("This form belongs to a different company. Reload before saving.");
+      return;
+    }
+    if (!name) {
+      setError("Company name is required.");
+      return;
+    }
+    try {
+      setSavingName(true);
+      setError("");
+      const result = await updateCompany(requestedId, { name });
+      const savedName = result?.data?.name || name;
+      setCompany((current) => (current ? { ...current, name: savedName } : current));
+      setEditForm((current) => (current ? { ...current, name: savedName } : current));
+      setNameDraft(savedName);
+      setEditingName(false);
+      setNotice("Company name saved.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  function startAdminEdit(admin) {
+    setEditingAdminId(admin.id);
+    setAdminDraft(admin.name || "");
+    setError("");
+  }
+
+  async function saveAdminName(event) {
+    event.preventDefault();
+    const requestedId = String(companyId || "").trim();
+    const loadedId = String(company?.id || "").trim();
+    const name = String(adminDraft || "").trim();
+    if (!requestedId || loadedId !== requestedId || !editingAdminId) {
+      setError("This form belongs to a different company. Reload before saving.");
+      return;
+    }
+    if (!name) {
+      setError("Admin name is required.");
+      return;
+    }
+    try {
+      setSavingAdmin(true);
+      setError("");
+      const result = await updateCompanyAdmin(requestedId, editingAdminId, { name });
+      const savedName = result?.data?.name || name;
+      setCompany((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          companyAdmins: (current.companyAdmins || []).map((admin) =>
+            admin.id === editingAdminId ? { ...admin, name: savedName } : admin,
+          ),
+        };
+      });
+      setEditingAdminId("");
+      setNotice("Company admin name saved.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingAdmin(false);
+    }
+  }
+
   async function saveBranding(event) {
     event.preventDefault();
+    const requestedId = String(companyId || "").trim();
+    const formCompanyId = String(editForm?.companyId || "").trim();
+    const loadedId = String(company?.id || "").trim();
+    if (!requestedId || formCompanyId !== requestedId || loadedId !== requestedId) {
+      setError("This form belongs to a different company. Reload before saving.");
+      return;
+    }
+    const name = String(editForm.name || "").trim();
+    if (!name) {
+      setError("Company name is required.");
+      return;
+    }
     try {
-      await updateCompany(companyId, editForm);
-      setNotice("Company branding saved.");
+      setSaving(true);
+      setError("");
+      await updateCompany(requestedId, {
+        name,
+        slug: editForm.slug,
+        logo_url: editForm.logo_url,
+        primary_color: editForm.primary_color,
+        secondary_color: editForm.secondary_color,
+      });
+      setNotice("Company name saved.");
       await load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -503,7 +615,38 @@ export function CompanyDetailsPage() {
       <div className="spread">
         <div>
           <p className="eyebrow">Company</p>
-          <h1>{company.name}</h1>
+          {editingName ? (
+            <form className="row" onSubmit={saveCompanyName}>
+              <input
+                className="input"
+                aria-label="Company name"
+                value={nameDraft}
+                maxLength={120}
+                onChange={(event) => setNameDraft(event.target.value)}
+              />
+              <button className="btn btn-primary btn-small" type="submit" disabled={savingName}>
+                {savingName ? "Saving…" : "Save"}
+              </button>
+              <button className="btn btn-secondary btn-small" type="button" onClick={cancelCompanyName} disabled={savingName}>
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <div className="row">
+              <h1>{company.name}</h1>
+              <button
+                className="btn btn-secondary btn-small"
+                type="button"
+                onClick={() => {
+                  setNameDraft(company.name || "");
+                  setEditingName(true);
+                  setError("");
+                }}
+              >
+                Edit
+              </button>
+            </div>
+          )}
           <div className="muted">{company.slug} · Joined {formatDate(company.created_at)}</div>
         </div>
         <div className="wrap">
@@ -566,7 +709,39 @@ export function CompanyDetailsPage() {
               {(company.companyAdmins || []).length > 0 ? (
                 (company.companyAdmins || []).map((admin) => (
                   <div className="stack" key={admin.id || admin.email} style={{ marginTop: 8 }}>
-                    <div>{admin.name || "Unnamed admin"}</div>
+                    {editingAdminId === admin.id ? (
+                      <form className="row" onSubmit={saveAdminName}>
+                        <input
+                          className="input"
+                          aria-label="Company admin name"
+                          value={adminDraft}
+                          maxLength={120}
+                          onChange={(event) => setAdminDraft(event.target.value)}
+                        />
+                        <button className="btn btn-primary btn-small" type="submit" disabled={savingAdmin}>
+                          {savingAdmin ? "Saving…" : "Save"}
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-small"
+                          type="button"
+                          disabled={savingAdmin}
+                          onClick={() => setEditingAdminId("")}
+                        >
+                          Cancel
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="spread">
+                        <div>{admin.name || "Unnamed admin"}</div>
+                        <button
+                          className="btn btn-secondary btn-small"
+                          type="button"
+                          onClick={() => startAdminEdit(admin)}
+                        >
+                          Edit Admin
+                        </button>
+                      </div>
+                    )}
                     <div className="muted">{admin.email || "No email"}</div>
                     <div>{admin.phone || "No phone on file"}</div>
                   </div>
@@ -697,8 +872,21 @@ export function CompanyDetailsPage() {
           <h2>Branding and details</h2>
           <div className="grid-2">
             <div className="field">
-              <label>Name</label>
-              <input className="input" value={editForm.name} onChange={(event) => setEditForm({ ...editForm, name: event.target.value })} />
+              <label htmlFor="company-name">Company name</label>
+              <input
+                id="company-name"
+                className="input"
+                value={editForm.name}
+                maxLength={120}
+                onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
+              />
+              <p className="muted">
+                Renaming updates the name shown in this company’s dashboard. The tenant ID and linked orders, employees, and data stay the same.
+              </p>
+            </div>
+            <div className="field">
+              <label htmlFor="company-tenant-id">Tenant ID</label>
+              <input id="company-tenant-id" className="input" value={company.id} readOnly dir="ltr" />
             </div>
             <div className="field">
               <label>Slug</label>
@@ -725,7 +913,9 @@ export function CompanyDetailsPage() {
               </div>
             </div>
           </div>
-          <button className="btn btn-primary" type="submit">Save company</button>
+          <button className="btn btn-primary" type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save company"}
+          </button>
         </form>
       ) : null}
 

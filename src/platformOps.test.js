@@ -83,7 +83,17 @@ describe("Super Admin company operations UX", () => {
     assert.match(page, /tab === "features"\) await loadFeaturesTab/);
     assert.match(page, /tab === "integrations"\) await loadIntegrationsTab/);
     assert.equal(page.includes("Promise.all(["), false);
+    assert.match(page, /Company name/);
+    assert.match(page, /formCompanyId !== requestedId/);
+    assert.match(page, /Tenant ID/);
+    assert.match(page, /readOnly/);
     assert.match(page, /Save company/);
+    assert.match(page, /Edit Admin/);
+    assert.match(page, /saveCompanyName/);
+    assert.match(read("pages/SettingsPage.jsx"), /SuperAdminUsersSection/);
+    assert.match(read("pages/SuperAdminUsersSection.jsx"), /Super Admin Users/);
+    assert.match(read("pages/AcceptInvitePage.jsx"), /acceptPlatformAdminInvite/);
+    assert.equal(read("pages/SuperAdminUsersSection.jsx").includes("type=\"password\""), false);
     assert.match(page, /Deactivate this company/);
     assert.match(page, /administrative\/support tool/);
     assert.match(integrations, /listIntegrationsOverview/);

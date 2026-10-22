@@ -22,6 +22,13 @@ export function updateCompany(companyId, payload) {
   });
 }
 
+export function updateCompanyAdmin(companyId, employeeId, payload) {
+  return apiRequest(`/api/platform/companies/${companyId}/admins/${employeeId}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
 export function setCompanyActive(companyId, isActive) {
   return apiRequest(`/api/platform/companies/${companyId}/active`, {
     method: "PATCH",
