@@ -1,3 +1,4 @@
+import { ResponsibleUserSection } from "../components/companies/ResponsibleUserSection.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getCompany, setCompanyActive, updateCompany, updateCompanyAdmin } from "../api/companies";
@@ -417,6 +418,7 @@ export function CompanyDetailsPage() {
         if (!current) return current;
         return {
           ...current,
+          responsibleUser: current.responsibleUser?.id === editingAdminId ? { ...current.responsibleUser, name: savedName } : current.responsibleUser,
           companyAdmins: (current.companyAdmins || []).map((admin) =>
             admin.id === editingAdminId ? { ...admin, name: savedName } : admin,
           ),
@@ -465,10 +467,10 @@ export function CompanyDetailsPage() {
   }
 
   async function handleActiveToggle() {
-    const activating = company.is_active === false;
+    const activating = company.account_status !== "active";
     if (!activating) {
       const confirmed = window.confirm(
-        "Deactivate this company? Employees will not be able to sign in until it is activated again.",
+        "Suspend this company? Employees will not be able to sign in until it is activated again.",
       );
       if (!confirmed) return;
     }
@@ -605,7 +607,7 @@ export function CompanyDetailsPage() {
     );
   }
 
-  if (loading) return <p className="muted">Loading company…</p>;
+  if (loading || (company && String(company.id) !== String(companyId))) return <p className="muted">Loading company…</p>;
   if (!company) return <Banner>{error || "Company not found."}</Banner>;
 
   const usage = company.usage || {};
@@ -650,13 +652,13 @@ export function CompanyDetailsPage() {
           <div className="muted">{company.slug} · Joined {formatDate(company.created_at)}</div>
         </div>
         <div className="wrap">
-          <StatusBadge active={company.is_active !== false} offLabel="Inactive" />
+          <span className="badge">{company.account_status || "active"}</span>
           <button
-            className={company.is_active === false ? "btn btn-primary" : "btn btn-danger"}
+            className={company.account_status !== "active" ? "btn btn-primary" : "btn btn-danger"}
             type="button"
             onClick={handleActiveToggle}
           >
-            {company.is_active === false ? "Activate" : "Deactivate"}
+            {company.account_status !== "active" ? "Activate" : "Suspend"}
           </button>
           <button className="btn btn-secondary" type="button" onClick={() => navigate("/platform/companies")}>
             Back
@@ -679,6 +681,19 @@ export function CompanyDetailsPage() {
 
       {error ? <Banner>{error}</Banner> : null}
       {notice ? <Banner tone="ok">{notice}</Banner> : null}
+
+      <ResponsibleUserSection
+        key={company.id}
+        company={company}
+        onAssigned={(admin) => {
+          setEmployees(current => current.filter(employee => employee.id !== admin.id));
+          setCompany((current) => {
+            if (String(current?.id) !== String(admin.companyId)) return current;
+            const others = (current.companyAdmins || []).filter(user => user.id !== admin.id);
+            return { ...current, responsibleUser: admin, responsible_employee_id: admin.id, companyAdmins: [...others, admin] };
+          });
+        }}
+      />
 
       {tab === "overview" ? (
         <div className="stack">

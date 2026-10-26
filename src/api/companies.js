@@ -35,3 +35,13 @@ export function setCompanyActive(companyId, isActive) {
     body: { is_active: isActive },
   });
 }
+
+export function assignCompanyResponsible(companyId, { name, email, password }) {
+  return apiRequest(`/api/platform/companies/${encodeURIComponent(companyId)}/responsible`, {
+    method: "POST", body: { name, email, password },
+  });
+}
+
+export function updateCompanyResponsible(companyId, payload) {
+  return apiRequest(`/api/platform/companies/${encodeURIComponent(companyId)}/responsible`, { method: "PATCH", body: payload });
+}

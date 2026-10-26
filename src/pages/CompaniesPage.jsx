@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listCompanies, setCompanyActive } from "../api/companies";
-import { Banner, StatusBadge } from "../components/ui/Feedback.jsx";
+import { Banner } from "../components/ui/Feedback.jsx";
 import { formatDate } from "../lib/providers";
 
 export function CompaniesPage() {
@@ -39,10 +39,10 @@ export function CompaniesPage() {
 
   async function toggle(company) {
     try {
-      const activating = company.is_active === false;
+      const activating = company.account_status !== "active";
       if (!activating) {
         const confirmed = window.confirm(
-          "Deactivate this company? Employees will not be able to sign in until it is activated again.",
+          "Suspend this company? Employees will not be able to sign in until it is activated again.",
         );
         if (!confirmed) return;
       }
@@ -100,7 +100,7 @@ export function CompaniesPage() {
                   <td dir="ltr">{company.adminPhone || "—"}</td>
                   <td>{company.slug}</td>
                   <td>
-                    <StatusBadge active={company.is_active !== false} offLabel="Inactive" />
+                    <span className="badge">{company.account_status || "active"}</span>
                   </td>
                   <td>{company.integrationsCount ?? 0}</td>
                   <td>{formatDate(company.created_at)}</td>
@@ -116,11 +116,11 @@ export function CompaniesPage() {
                         Edit
                       </Link>
                       <button
-                        className={company.is_active === false ? "btn btn-secondary btn-small" : "btn btn-danger btn-small"}
+                        className={company.account_status !== "active" ? "btn btn-secondary btn-small" : "btn btn-danger btn-small"}
                         type="button"
                         onClick={() => toggle(company)}
                       >
-                        {company.is_active === false ? "Activate" : "Deactivate"}
+                        {company.account_status !== "active" ? "Activate" : "Suspend"}
                       </button>
                     </div>
                   </td>
