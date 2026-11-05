@@ -1,5 +1,13 @@
 import { apiRequest } from "./client";
 
+export function getCompanyDeletionReadiness(companyId) {
+  return apiRequest(`/api/platform/companies/${encodeURIComponent(companyId)}/deletion-readiness`);
+}
+
+export function getCompanyDeletionJobStatus(jobId) {
+  return apiRequest(`/api/platform/company-deletion-jobs/${encodeURIComponent(jobId)}`);
+}
+
 export function listCompanies() {
   return apiRequest("/api/platform/companies");
 }

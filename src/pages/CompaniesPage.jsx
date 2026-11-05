@@ -3,8 +3,12 @@ import { Link } from "react-router-dom";
 import { listCompanies, setCompanyActive } from "../api/companies";
 import { Banner } from "../components/ui/Feedback.jsx";
 import { formatDate } from "../lib/providers";
+import { isPlatformAdminSession } from "../auth/session";
+import { PermanentDeleteCompanyModal } from "../components/companies/PermanentDeleteCompanyModal";
 
 export function CompaniesPage() {
+  const [deletionCompany, setDeletionCompany] = useState(null);
+  const showDeletion = import.meta.env.VITE_COMPANY_DELETION_FOUNDATION_ENABLED === "true" && isPlatformAdminSession();
   const [rows, setRows] = useState([]);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
@@ -122,6 +126,17 @@ export function CompaniesPage() {
                       >
                         {company.account_status !== "active" ? "Activate" : "Suspend"}
                       </button>
+                      {showDeletion ? (
+                        <button className="btn btn-danger btn-small" type="button"
+                          aria-label={`Review permanent deletion of ${company.name}`}
+                          title={company.account_status === "suspended" ? "Review permanent deletion (disabled in this phase)" : "Suspend the company before reviewing deletion"}
+                          disabled={company.account_status !== "suspended"}
+                          onClick={() => setDeletionCompany(company)}>
+                          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" />
+                          </svg>
+                        </button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -131,6 +146,7 @@ export function CompaniesPage() {
           {filtered.length === 0 ? <p className="empty">No companies match this search.</p> : null}
         </div>
       )}
+      {deletionCompany ? <PermanentDeleteCompanyModal key={deletionCompany.id} company={deletionCompany} onClose={() => setDeletionCompany(null)} /> : null}
     </div>
   );
 }
