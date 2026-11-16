@@ -14,21 +14,24 @@ export function SuperAdminUsersSection() {
   const [email, setEmail] = useState("");
   const [inviteLink, setInviteLink] = useState("");
 
-  async function load() {
+  async function load(signal) {
     setLoading(true);
     setError("");
     try {
-      const result = await listPlatformAdmins();
+      const result = await listPlatformAdmins({ signal });
+      if (signal?.aborted) return;
       setAdmins(result.data || []);
     } catch (err) {
-      setError(err.message);
+      if (!signal?.aborted) setError(err.message);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
   }, []);
 
   async function onInvite(event) {

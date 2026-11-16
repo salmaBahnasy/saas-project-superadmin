@@ -8,12 +8,12 @@ export function getCompanyDeletionJobStatus(jobId) {
   return apiRequest(`/api/platform/company-deletion-jobs/${encodeURIComponent(jobId)}`);
 }
 
-export function listCompanies() {
-  return apiRequest("/api/platform/companies");
+export function listCompanies({ signal } = {}) {
+  return apiRequest("/api/platform/companies", { signal });
 }
 
-export function getCompany(companyId) {
-  return apiRequest(`/api/platform/companies/${companyId}`);
+export function getCompany(companyId, { signal } = {}) {
+  return apiRequest(`/api/platform/companies/${companyId}`, { signal });
 }
 
 export function createCompany(payload) {

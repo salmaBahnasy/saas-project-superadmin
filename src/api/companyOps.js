@@ -1,11 +1,11 @@
 import { apiRequest } from "./client";
 
-export function listCompanyEmployees(companyId) {
-  return apiRequest(`/api/platform/companies/${companyId}/employees`);
+export function listCompanyEmployees(companyId, { signal } = {}) {
+  return apiRequest(`/api/platform/companies/${companyId}/employees`, { signal });
 }
 
-export function listCompanyFeatures(companyId) {
-  return apiRequest(`/api/platform/companies/${companyId}/features`);
+export function listCompanyFeatures(companyId, { signal } = {}) {
+  return apiRequest(`/api/platform/companies/${companyId}/features`, { signal });
 }
 
 export function updateCompanyFeature(companyId, featureKey, isEnabled) {

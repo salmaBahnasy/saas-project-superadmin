@@ -10,7 +10,8 @@
     "test": "node --test src/shopifyConnectionUx.test.js src/sallaConnectionUx.test.js src/spreadsheetConnectionUx.test.js src/platformOps.test.js src/deployment.prep.test.js src/bostaWebhookUx.test.js",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:loading": "node --test src/loading.performance.test.js"
   },
   "dependencies": {
     "react": "^19.2.5",

@@ -1,6 +1,8 @@
 import { clearPlatformSession, getPlatformToken } from "../auth/session";
+import { createReadRequests } from "../lib/readRequests.js";
 
 const API_BASE = String(import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const readRequests = createReadRequests();
 
 export class ApiError extends Error {
   constructor(message, { status, code, details } = {}) {
@@ -43,7 +45,39 @@ function friendlyMessage(status, fallback, path = "", code = "") {
   return fallback || "Request failed.";
 }
 
-export async function apiRequest(path, { method = "GET", body, token } = {}) {
+async function fetchResponse(url, config) {
+  if (config.method.toUpperCase() !== "GET") {
+    const response = await fetch(url, config);
+    return { response, text: await response.text() };
+  }
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  let timedOut = false;
+  if (config.signal?.aborted) abort();
+  else config.signal?.addEventListener("abort", abort, { once: true });
+  const timer = setTimeout(() => { timedOut = true;controller.abort(); }, 30_000);
+  try {
+    const response = await fetch(url, { ...config, signal: controller.signal });
+    return { response, text: await response.text() };
+  } catch (error) {
+    if (timedOut) throw new ApiError("The request timed out. Please try again.", { code: "REQUEST_TIMEOUT" });
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    config.signal?.removeEventListener("abort", abort);
+  }
+}
+
+export function apiRequest(path, { method = "GET", body, token, signal } = {}) {
+  const auth = token || getPlatformToken();
+  if (method.toUpperCase() === "GET") {
+    return readRequests.load(auth, path, sharedSignal => performApiRequest(path, { method, body, token: auth, signal: sharedSignal }), { signal });
+  }
+  readRequests.clear();
+  return performApiRequest(path, { method, body, token: auth, signal }).finally(() => readRequests.clear());
+}
+
+async function performApiRequest(path, { method, body, token, signal }) {
   if (!API_BASE) {
     throw new ApiError("VITE_API_BASE_URL is not configured.");
   }
@@ -53,13 +87,13 @@ export async function apiRequest(path, { method = "GET", body, token } = {}) {
   if (auth) headers.Authorization = `Bearer ${auth}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
-  const response = await fetch(`${API_BASE}${path}`, {
+  const { response, text } = await fetchResponse(`${API_BASE}${path}`, {
     method,
     headers,
+    signal,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-  const text = await response.text();
   let json = null;
   try {
     json = text ? JSON.parse(text) : null;

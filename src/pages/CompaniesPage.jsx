@@ -14,21 +14,24 @@ export function CompaniesPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  async function load(signal) {
     setLoading(true);
     setError("");
     try {
-      const companiesRes = await listCompanies();
+      const companiesRes = await listCompanies({ signal });
+      if (signal?.aborted) return;
       setRows(companiesRes.data || []);
     } catch (err) {
-      setError(err.message);
+      if (!signal?.aborted) setError(err.message);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
   }, []);
 
   const filtered = useMemo(() => {

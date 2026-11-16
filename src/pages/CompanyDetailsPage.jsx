@@ -96,9 +96,9 @@ export function CompanyDetailsPage() {
   const [adminDraft, setAdminDraft] = useState("");
   const [savingAdmin, setSavingAdmin] = useState(false);
 
-  async function loadCompany(isCurrent = () => true) {
+  async function loadCompany(isCurrent = () => true, signal) {
     const requestedId = String(companyId || "").trim();
-    const companyRes = await getCompany(requestedId);
+    const companyRes = await getCompany(requestedId, { signal });
     if (!isCurrent()) return null;
     const data = companyRes.data;
     if (String(data?.id || "") !== requestedId) {
@@ -116,19 +116,19 @@ export function CompanyDetailsPage() {
     return data;
   }
 
-  async function loadEmployeesTab() {
-    const employeesRes = await listCompanyEmployees(companyId);
-    setEmployees(employeesRes.data || []);
+  async function loadEmployeesTab(signal) {
+    const employeesRes = await listCompanyEmployees(companyId, { signal });
+    if (!signal?.aborted) setEmployees(employeesRes.data || []);
   }
 
-  async function loadFeaturesTab() {
-    const featuresRes = await listCompanyFeatures(companyId);
-    setFeatures(featuresRes.data || []);
+  async function loadFeaturesTab(signal) {
+    const featuresRes = await listCompanyFeatures(companyId, { signal });
+    if (!signal?.aborted) setFeatures(featuresRes.data || []);
   }
 
-  async function loadIntegrationsTab() {
-    const integrationsRes = await listCompanyIntegrations(companyId);
-    setIntegrations(integrationsRes.data || []);
+  async function loadIntegrationsTab(signal) {
+    const integrationsRes = await listCompanyIntegrations(companyId, { signal });
+    if (!signal?.aborted) setIntegrations(integrationsRes.data || []);
   }
 
   async function load() {
@@ -148,11 +148,12 @@ export function CompanyDetailsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       setLoading(true);
       setError("");
       try {
-        await loadCompany(() => !cancelled);
+        await loadCompany(() => !cancelled, controller.signal);
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -184,16 +185,21 @@ export function CompanyDetailsPage() {
     })();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [companyId]);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    setEmployees([]);
+    setFeatures([]);
+    setIntegrations([]);
     async function loadTab() {
       try {
-        if (tab === "employees") await loadEmployeesTab();
-        if (tab === "features") await loadFeaturesTab();
-        if (tab === "integrations") await loadIntegrationsTab();
+        if (tab === "employees") await loadEmployeesTab(controller.signal);
+        if (tab === "features") await loadFeaturesTab(controller.signal);
+        if (tab === "integrations") await loadIntegrationsTab(controller.signal);
       } catch (err) {
         if (!cancelled) setError(err.message);
       }
@@ -201,6 +207,7 @@ export function CompanyDetailsPage() {
     loadTab();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [tab, companyId]);
 

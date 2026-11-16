@@ -1,11 +1,11 @@
 import { apiRequest } from "./client";
 
-export function listIntegrationsOverview() {
-  return apiRequest("/api/platform/integrations");
+export function listIntegrationsOverview({ signal } = {}) {
+  return apiRequest("/api/platform/integrations", { signal });
 }
 
-export function listCompanyIntegrations(companyId) {
-  return apiRequest(`/api/platform/companies/${companyId}/integrations`);
+export function listCompanyIntegrations(companyId, { signal } = {}) {
+  return apiRequest(`/api/platform/companies/${companyId}/integrations`, { signal });
 }
 
 export function getCompanyIntegration(companyId, integrationId) {

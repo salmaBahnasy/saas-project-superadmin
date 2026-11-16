@@ -11,9 +11,10 @@ export function IntegrationsOverviewPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     async function load() {
       try {
-        const result = await listIntegrationsOverview();
+        const result = await listIntegrationsOverview({ signal: controller.signal });
         if (!cancelled) setRows(result.data || []);
       } catch (err) {
         if (!cancelled) setError(err.message);
@@ -24,6 +25,7 @@ export function IntegrationsOverviewPage() {
     load();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 

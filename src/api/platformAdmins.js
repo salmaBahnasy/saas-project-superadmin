@@ -1,7 +1,7 @@
 import { apiRequest } from "./client";
 
-export function listPlatformAdmins() {
-  return apiRequest("/api/platform/admins");
+export function listPlatformAdmins({ signal } = {}) {
+  return apiRequest("/api/platform/admins", { signal });
 }
 
 export function invitePlatformAdmin(payload) {

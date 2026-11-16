@@ -12,9 +12,10 @@ export function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     async function load() {
       try {
-        const companiesRes = await listCompanies();
+        const companiesRes = await listCompanies({ signal: controller.signal });
         const companies = companiesRes.data || [];
         if (cancelled) return;
         setRecent(companies.slice(0, 5));
@@ -36,6 +37,7 @@ export function DashboardPage() {
     load();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 
