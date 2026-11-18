@@ -12,6 +12,17 @@ function read(rel) {
 }
 
 describe("Super Admin company operations UX", () => {
+  it("lets Settings choose pending review or immediate dashboard access", () => {
+    const page = read("pages/SettingsPage.jsx");
+    const section = read("pages/NewCompanyAccessSection.jsx");
+    const api = read("api/signupAccess.js");
+    assert.match(page, /NewCompanyAccessSection/);
+    assert.match(section, /role="switch"/);
+    assert.match(section, /Pending review/);
+    assert.match(section, /Active immediately/);
+    assert.match(api, /\/api\/platform\/settings\/signup-access/);
+  });
+
   it("shows newest companies first and keeps client search", () => {
     const page = read("pages/CompaniesPage.jsx");
     assert.match(page, /Newest workspaces appear first/);

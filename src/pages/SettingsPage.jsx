@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { clearPlatformSession, getPlatformUser } from "../auth/session";
 import { getApiBaseUrl } from "../api/client";
+import { NewCompanyAccessSection } from "./NewCompanyAccessSection.jsx";
 import { SuperAdminUsersSection } from "./SuperAdminUsersSection.jsx";
 
 export function SettingsPage() {
@@ -32,6 +33,7 @@ export function SettingsPage() {
           Logout
         </button>
       </div>
+      <NewCompanyAccessSection />
       <SuperAdminUsersSection />
     </div>
   );
